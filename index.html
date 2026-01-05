@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --border: #e2e8f0;
+        --text: #1e293b;
+        --danger: #ef4444;
+      }
+      * { box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+      
+      /* --- Auth Overlay --- */
+      #auth-overlay {
+        position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 1000;
+        display: flex; justify-content: center; align-items: center; flex-direction: column;
+      }
+      .auth-box { background: var(--surface); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+      input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; }
+      button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+      button:hover { background: var(--primary-hover); }
+      button.secondary { background: #e2e8f0; color: #475569; }
+
+      /* --- Main Layout --- */
+      .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: none; } /* Hidden until auth */
+      header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+      h1 { font-size: 1.5rem; margin: 0; }
+      
+      /* --- Calendar --- */
+      .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+      .calendar-grid { 
+        display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; 
+        background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      }
+      .day-name { background: var(--bg); padding: 10px; text-align: center; font-weight: 600; font-size: 0.9rem; }
+      .day-cell { 
+        background: var(--surface); min-height: 100px; padding: 8px; cursor: pointer; position: relative;
+        transition: background 0.2s;
+      }
+      .day-cell:hover { background: #eff6ff; }
+      .day-number { font-weight: 500; margin-bottom: 5px; display: block; }
+      .day-cell.today { background: #f0fdf4; }
+      .day-cell.empty { background: #f8fafc; cursor: default; }
+      
+      /* Booking Chips in Calendar */
+      .booking-chip { 
+        font-size: 0.75rem; background: #dbeafe; color: #1e40af; 
+        padding: 2px 6px; border-radius: 4px; margin-top: 2px; 
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+      }
+
+      /* --- Side Panel --- */
+      #side-panel {
+        position: fixed; top: 0; right: -400px; width: 400px; height: 100%;
+        background: var(--surface); box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+        padding: 20px; transition: right 0.3s ease; z-index: 500; overflow-y: auto;
+      }
+      #side-panel.open { right: 0; }
+      .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+      .close-btn { background: none; color: #64748b; font-size: 1.5rem; padding: 0; }
+      .close-btn:hover { background: none; color: var(--text); }
+      
+      /* Existing List */
+      .existing-booking { background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid var(--primary); }
+      .time-range { font-weight: 600; font-size: 0.9rem; }
+      .note { font-size: 0.85rem; color: #475569; margin-top: 4px; }
+
+      /* Mobile Support */
+      @media (max-width: 768px) {
+        .calendar-grid { grid-template-columns: repeat(7, 1fr); }
+        .day-cell { min-height: 60px; font-size: 0.8rem; }
+        .booking-chip { display: none; } /* Hide chips on mobile, show dot instead? */
+        .has-booking::after { content: '•'; color: var(--primary); font-size: 1.5rem; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+        #side-panel { width: 100%; right: -100%; }
+      }
+      
+      .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-left: 10px; display: none; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+
+    <div id="auth-overlay">
+      <div class="auth-box">
+        <h2>🔒 Admin Access</h2>
+        <p>Mindplus IT Solutions</p>
+        <input type="password" id="password-input" placeholder="Enter Admin Password">
+        <button onclick="authenticate()">Login</button>
+        <p id="auth-error" style="color:var(--danger); display:none; margin-top:10px;">Incorrect Password</p>
+      </div>
+    </div>
+
+    <div class="container" id="app-container">
+      <header>
+        <div>
+          <h1>Shyam Residency</h1>
+          <span style="font-size:0.9rem; color:#64748b">Community Hall Booking System</span>
+        </div>
+        <button class="secondary" onclick="logout()">Logout</button>
+      </header>
+
+      <div class="calendar-controls">
+        <div class="calendar-header">
+          <button class="secondary" onclick="changeMonth(-1)">← Prev</button>
+          <h2 id="current-month-year">January 2026</h2>
+          <button class="secondary" onclick="changeMonth(1)">Next →</button>
+        </div>
+      </div>
+
+      <div id="calendar" class="calendar-grid">
+        </div>
+    </div>
+
+    <div id="side-panel">
+      <div class="panel-header">
+        <h3 id="panel-date">Selected Date</h3>
+        <button class="close-btn" onclick="togglePanel(false)">&times;</button>
+      </div>
+
+      <h4>Add New Booking</h4>
+      <form id="booking-form" onsubmit="saveBooking(event)">
+        <label>Start Time</label>
+        <input type="time" id="start-time" required>
+        <label>End Time</label>
+        <input type="time" id="end-time" required>
+        <label>Note / Client Name</label>
+        <textarea id="booking-note" rows="3" required placeholder="e.g., Wedding Reception - Mr. Sharma"></textarea>
+        
+        <button type="submit" style="width:100%; margin-top:10px;">
+          Confirm Booking <div id="save-loader" class="loader"></div>
+        </button>
+      </form>
+
+      <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);">
+
+      <h4>Existing Bookings</h4>
+      <div id="existing-list">
+        <p style="color:#94a3b8; font-style:italic;">No bookings for this date.</p>
+      </div>
+    </div>
+
+    <script>
+      let currentDate = new Date();
+      let bookingsCache = [];
+      let selectedDateStr = "";
+
+      // --- Auth Logic ---
+      function authenticate() {
+        const pass = document.getElementById('password-input').value;
+        google.script.run
+          .withSuccessHandler(isValid => {
+            if(isValid) {
+              document.getElementById('auth-overlay').style.display = 'none';
+              document.getElementById('app-container').style.display = 'block';
+              loadCalendar();
+            } else {
+              document.getElementById('auth-error').style.display = 'block';
+            }
+          })
+          .checkAuth(pass);
+      }
+
+      function logout() {
+        location.reload();
+      }
+
+      // --- Calendar Logic ---
+      function loadCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        document.getElementById('current-month-year').innerText = 
+          currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        // Fetch bookings for this month from backend
+        google.script.run
+          .withSuccessHandler(data => {
+            bookingsCache = data;
+            renderGrid(year, month);
+          })
+          .getBookingsByMonth(year, month);
+      }
+
+      function renderGrid(year, month) {
+        const grid = document.getElementById('calendar');
+        grid.innerHTML = '';
+        
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        days.forEach(d => grid.innerHTML += `<div class="day-name">${d}</div>`);
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Empty cells for padding
+        for (let i = 0; i < firstDay; i++) {
+          grid.innerHTML += `<div class="day-cell empty"></div>`;
+        }
+
+        // Day cells
+        for (let i = 1; i <= daysInMonth; i++) {
+          const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+          const isToday = new Date().toISOString().split('T')[0] === dateStr;
+          
+          const dayBookings = bookingsCache.filter(b => b.date === dateStr);
+          const hasBookingClass = dayBookings.length > 0 ? 'has-booking' : '';
+
+          let chips = dayBookings.map(b => 
+            `<div class="booking-chip">${b.start}-${b.end}</div>`
+          ).join('');
+
+          const cell = document.createElement('div');
+          cell.className = `day-cell ${isToday ? 'today' : ''} ${hasBookingClass}`;
+          cell.innerHTML = `<span class="day-number">${i}</span>${chips}`;
+          cell.onclick = () => openPanel(dateStr, dayBookings);
+          grid.appendChild(cell);
+        }
+      }
+
+      function changeMonth(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        loadCalendar();
+      }
+
+      // --- Side Panel Logic ---
+      function openPanel(dateStr, bookings) {
+        selectedDateStr = dateStr;
+        document.getElementById('panel-date').innerText = new Date(dateStr).toDateString();
+        document.getElementById('side-panel').classList.add('open');
+        
+        // Reset form
+        document.getElementById('booking-form').reset();
+        
+        // Render Existing List
+        const listContainer = document.getElementById('existing-list');
+        listContainer.innerHTML = '';
+        
+        if (bookings.length === 0) {
+          listContainer.innerHTML = '<p style="color:#94a3b8; font-style:italic;">No bookings for this date.</p>';
+        } else {
+          bookings.sort((a, b) => a.start.localeCompare(b.start)).forEach(b => {
+            listContainer.innerHTML += `
+              <div class="existing-booking">
+                <div class="time-range">🕒 ${b.start} - ${b.end}</div>
+                <div class="note">${b.note}</div>
+              </div>`;
+          });
+        }
+      }
+
+      function togglePanel(show) {
+        const el = document.getElementById('side-panel');
+        if(show) el.classList.add('open');
+        else el.classList.remove('open');
+      }
+
+      // --- Save Booking Logic ---
+      function saveBooking(e) {
+        e.preventDefault();
+        
+        const start = document.getElementById('start-time').value;
+        const end = document.getElementById('end-time').value;
+        const note = document.getElementById('booking-note').value;
+        
+        if(start >= end) {
+          alert('Start time must be earlier than end time.');
+          return;
+        }
+
+        document.getElementById('save-loader').style.display = 'inline-block';
+
+        const payload = {
+          date: selectedDateStr,
+          start: start,
+          end: end,
+          note: note
+        };
+
+        google.script.run
+          .withSuccessHandler(res => {
+            document.getElementById('save-loader').style.display = 'none';
+            togglePanel(false);
+            loadCalendar(); // Refresh grid
+            alert('Booking Saved Successfully! ✅');
+          })
+          .withFailureHandler(err => {
+            document.getElementById('save-loader').style.display = 'none';
+            alert('Error: ' + err.message);
+          })
+          .addBooking(payload);
+      }
+    </script>
+  </body>
+</html>
