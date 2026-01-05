@@ -3,370 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shyam Residency | Internal Booking</title>
+    <title>Shyam Residency | Royal Calendar</title>
     <style>
-        /* --- CSS VARIABLES & THEMES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Quicksand:wght@400;600&display=swap');
+
+        /* --- THEME VARIABLES --- */
         :root {
-            /* Default: Classic Blue */
-            --bg-body: #f4f7f6;
-            --bg-card: #ffffff;
-            --text-main: #2c3e50;
-            --text-sub: #7f8c8d;
-            --primary: #2980b9;
-            --primary-light: #ebf5fb;
-            --accent: #e74c3c;
-            --border: #ecf0f1;
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             
-            /* Status Colors */
-            --status-avail: #27ae60;
-            --status-partial: #f39c12;
-            --status-full: #c0392b;
+            --text-white: #ffffff;
+            --text-gold: #ffd700;
+            
+            --status-free: rgba(255, 255, 255, 0.1);
+            --status-partial: #ff9f43;
+            --status-full: #ff6b6b;
         }
 
-        /* Royal Maroon Theme */
-        [data-theme="maroon"] {
-            --bg-body: #fcf4f4;
-            --primary: #800000;
-            --primary-light: #fbebeb;
-            --text-main: #4a1c1c;
+        body {
+            margin: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-white);
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        /* Forest Green Theme */
-        [data-theme="green"] {
-            --bg-body: #f4fcf6;
-            --primary: #27ae60;
-            --primary-light: #eafaf1;
-            --text-main: #1e4d2b;
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-
-        /* Dark Mode */
-        [data-theme="dark"] {
-            --bg-body: #1a1a1a;
-            --bg-card: #2d2d2d;
-            --text-main: #ecf0f1;
-            --text-sub: #bdc3c7;
-            --primary: #3498db;
-            --primary-light: #34495e;
-            --border: #404040;
-        }
-
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: background 0.3s, color 0.3s; }
-        body { margin: 0; background: var(--bg-body); color: var(--text-main); padding: 20px; }
 
         /* --- LAYOUT --- */
-        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header { text-align: center; margin-bottom: 30px; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin: 0; }
+        
+        .year-controls { display: flex; justify-content: center; gap: 20px; margin-top: 10px; }
+        .btn-nav { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(4px); }
+        .current-year { font-size: 1.8rem; font-weight: bold; color: var(--text-gold); }
 
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h1 { margin: 0; font-size: 1.5rem; }
+        /* --- CALENDAR GRID --- */
+        .year-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .month-card { background: var(--glass-bg); backdrop-filter: blur(8px); border-radius: 16px; border: 1px solid var(--glass-border); padding: 15px; }
+        .month-name { text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--text-gold); font-family: 'Playfair Display', serif; margin-bottom: 10px;}
         
-        /* --- THEME SWITCHER --- */
-        select.theme-selector {
-            padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
-            background: var(--bg-card); color: var(--text-main); cursor: pointer;
-        }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 0.8rem; }
+        .day-label { text-align: center; opacity: 0.7; font-size: 0.7rem; }
+        
+        .date-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; background: var(--status-free); transition: 0.2s; position: relative;}
+        .date-cell:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
+        .is-today { border: 2px solid var(--text-gold); }
 
-        /* --- CALENDAR --- */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        
-        .day-name { text-align: center; font-weight: bold; color: var(--text-sub); font-size: 0.9rem; padding: 10px 0; }
-        
-        .date-cell { 
-            aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border);
-            position: relative;
-        }
-        .date-cell:hover { transform: scale(1.05); border-color: var(--primary); }
-        .date-cell.empty { border: none; cursor: default; }
-        
-        /* Status Indicators */
-        .dot { height: 8px; width: 8px; border-radius: 50%; margin-top: 5px; }
-        .status-avail .dot { background: var(--status-avail); display: none; } /* Clean look for empty */
-        .status-partial { border-color: var(--status-partial); background: rgba(243, 156, 18, 0.1); }
-        .status-partial .dot { background: var(--status-partial); }
-        .status-full { border-color: var(--status-full); background: rgba(192, 57, 43, 0.1); }
-        .status-full .dot { background: var(--status-full); }
-        
-        .selected { background: var(--primary); color: white; border-color: var(--primary); }
-        .selected .dot { background: white; }
+        /* Colors based on slot count */
+        .status-partial { background: var(--status-partial); color: white; box-shadow: 0 0 5px var(--status-partial); }
+        .status-full { background: var(--status-full); color: white; box-shadow: 0 0 8px var(--status-full); }
 
-        /* --- BOOKING PANEL --- */
-        .panel-title { font-size: 1.2rem; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-sub); }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-main); }
+        /* --- MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); z-index: 1000; }
+        .modal-content { background: white; color: #333; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; animation: popIn 0.3s ease; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
-        button.btn-save { 
-            width: 100%; padding: 12px; background: var(--primary); color: white; border: none; 
-            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem;
-        }
-        button.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+        .modal-header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #2E3192; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
 
-        .booking-list { margin-top: 20px; max-height: 300px; overflow-y: auto; }
-        .booking-item { 
-            background: var(--primary-light); padding: 10px; border-radius: 6px; 
-            margin-bottom: 8px; border-left: 4px solid var(--primary); font-size: 0.9rem;
+        /* --- SLOT SELECTOR (CHIPS) --- */
+        .slot-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .slot-chip {
+            flex: 1; padding: 10px; text-align: center; border: 2px solid #ddd; 
+            border-radius: 8px; cursor: pointer; transition: 0.2s; user-select: none;
+            font-weight: 600; color: #555;
         }
-        .booking-time { font-weight: bold; display: block; margin-bottom: 4px; }
         
-        .loader { display: none; text-align: center; margin-top: 10px; font-size: 0.9rem; color: var(--text-sub); }
+        /* Checkbox hidden logic */
+        .slot-chip.active { border-color: transparent; color: white; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        
+        /* Individual Colors */
+        .slot-chip[data-value="Morning"].active { background: #f39c12; } /* Orange */
+        .slot-chip[data-value="Noon"].active { background: #e67e22; } /* Darker Orange */
+        .slot-chip[data-value="Evening"].active { background: #2E3192; } /* Purple/Blue */
 
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; }
-            .calendar-grid { gap: 5px; }
-        }
+        .slot-chip.disabled { background: #eee; color: #aaa; cursor: not-allowed; border-color: #eee; opacity: 0.6; }
+
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .save-btn { width: 100%; padding: 12px; background: #2E3192; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .booking-history { background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; border-left: 3px solid #2E3192;}
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <header>
-            <h1>Shyam Residency</h1>
-            <select class="theme-selector" id="themeSelect">
-                <option value="default">Classic Blue</option>
-                <option value="maroon">Royal Maroon</option>
-                <option value="green">Forest Green</option>
-                <option value="dark">Dark Mode</option>
-            </select>
-        </header>
-
-        <div class="calendar-header">
-            <button id="prevMonth">&lt;</button>
-            <h2 id="monthYear"></h2>
-            <button id="nextMonth">&gt;</button>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid">
-            </div>
+<div class="header">
+    <h1>Shyam Residency</h1>
+    <div class="year-controls">
+        <button class="btn-nav" id="prevYear">←</button>
+        <span class="current-year" id="yearDisplay"></span>
+        <button class="btn-nav" id="nextYear">→</button>
     </div>
+</div>
 
-    <div class="card" id="bookingPanel">
-        <div class="panel-title">Details for <span id="selectedDateDisplay">Select a date</span></div>
+<div class="year-grid" id="yearGrid"></div>
+
+<div class="modal-overlay" id="bookingModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="modal-title" id="modalDateTitle">Date</span>
+            <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
         
-        <div id="bookingForm" style="display:none;">
-            <div class="existing-bookings">
-                <label>Existing Bookings:</label>
-                <div id="bookingList" class="booking-list"></div>
-            </div>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-            
-            <label>Add New Booking:</label>
-            <div class="form-group">
-                <label>Start Time</label>
-                <input type="time" id="startTime">
-            </div>
-            <div class="form-group">
-                <label>End Time</label>
-                <input type="time" id="endTime">
-            </div>
-            <div class="form-group">
-                <label>Note (Client Name/Event)</label>
-                <textarea id="note" rows="2"></textarea>
-            </div>
-            <button class="btn-save" id="saveBtn">Confirm Booking</button>
-            <div class="loader" id="loader">Syncing with Google Sheets...</div>
+        <div id="bookingHistory" class="booking-history" style="display:none;"></div>
+
+        <label style="font-weight:bold; display:block; margin-bottom:8px;">Select Slots:</label>
+        <div class="slot-container">
+            <div class="slot-chip" data-value="Morning" onclick="toggleSlot(this)">Morning</div>
+            <div class="slot-chip" data-value="Noon" onclick="toggleSlot(this)">Noon</div>
+            <div class="slot-chip" data-value="Evening" onclick="toggleSlot(this)">Evening</div>
         </div>
-        <div id="emptyState" style="color: var(--text-sub); text-align: center; padding: 20px;">
-            Click a date on the calendar to view or add bookings.
-        </div>
+
+        <label>Client Name / Note</label> 
+        <textarea id="inNote" rows="2" placeholder="Enter booking details..."></textarea>
+        
+        <button class="save-btn" id="btnSave">Confirm Booking</button>
+        <p id="statusMsg" style="text-align: center; font-size: 0.8rem; margin-top:5px; color:#666;"></p>
     </div>
 </div>
 
 <script>
     // --- CONFIGURATION ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbwC5pqyTfjGh3J5AiCbmww9ez2ilbw2EkxdIntj5P_rSXKYL3UmZ38SBQxNHx-ShhgaXw/exec"; // <--- PASTE WEB APP URL HERE
+    const API_URL = "https://script.google.com/macros/s/AKfycbwC5pqyTfjGh3J5AiCbmww9ez2ilbw2EkxdIntj5P_rSXKYL3UmZ38SBQxNHx-ShhgaXw/exec"; // <--- PASTE NEW WEB APP URL HERE
 
-    // --- STATE ---
-    let currentDate = new Date();
+    let displayYear = new Date().getFullYear();
     let bookings = [];
     let selectedDateISO = null;
+    let selectedSlots = []; // Stores currently selected chips
 
-    // --- DOM ELEMENTS ---
-    const grid = document.getElementById('calendarGrid');
-    const monthYear = document.getElementById('monthYear');
-    const themeSelect = document.getElementById('themeSelect');
-    const bookingForm = document.getElementById('bookingForm');
-    const emptyState = document.getElementById('emptyState');
-    const bookingList = document.getElementById('bookingList');
-    const saveBtn = document.getElementById('saveBtn');
-    const loader = document.getElementById('loader');
+    const grid = document.getElementById('yearGrid');
+    const modal = document.getElementById('bookingModal');
 
-    // --- INITIALIZATION ---
     async function init() {
-        renderCalendar();
+        document.getElementById('yearDisplay').textContent = displayYear;
+        renderYear();
         await fetchBookings();
-        renderCalendar(); // Re-render to show dots
+        renderYear();
     }
 
-    // --- THEME SWITCHING ---
-    themeSelect.addEventListener('change', (e) => {
-        if(e.target.value === 'default') {
-            document.body.removeAttribute('data-theme');
-        } else {
-            document.body.setAttribute('data-theme', e.target.value);
-        }
-    });
-
-    // --- CALENDAR LOGIC ---
-    function renderCalendar() {
+    // --- RENDER YEAR GRID ---
+    function renderYear() {
         grid.innerHTML = '';
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+        document.getElementById('yearDisplay').textContent = displayYear;
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         
-        monthYear.textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+        for (let m = 0; m < 12; m++) {
+            const card = document.createElement('div');
+            card.className = 'month-card';
+            
+            const title = document.createElement('div');
+            title.className = 'month-name';
+            title.textContent = monthNames[m];
+            card.appendChild(title);
 
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const dGrid = document.createElement('div');
+            dGrid.className = 'days-grid';
+            
+            // Labels
+            ["S","M","T","W","T","F","S"].forEach(d => {
+                const l = document.createElement('div'); l.className = 'day-label'; l.textContent=d; dGrid.appendChild(l);
+            });
 
-        // Days Headers
-        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
-            const div = document.createElement('div');
-            div.className = 'day-name';
-            div.textContent = day;
-            grid.appendChild(div);
+            // Days
+            const daysInMonth = new Date(displayYear, m + 1, 0).getDate();
+            const firstDay = new Date(displayYear, m, 1).getDay();
+
+            for(let i=0; i<firstDay; i++) dGrid.appendChild(document.createElement('div')); // Spacers
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateISO = `${displayYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const cell = document.createElement('div');
+                cell.className = 'date-cell';
+                cell.textContent = d;
+
+                // Color Logic
+                const dayBookings = bookings.filter(b => b.date === dateISO);
+                let bookedCount = 0;
+                
+                // Count total occupied slots for this day
+                dayBookings.forEach(b => {
+                    if(b.slots.includes('Morning')) bookedCount++;
+                    if(b.slots.includes('Noon')) bookedCount++;
+                    if(b.slots.includes('Evening')) bookedCount++;
+                });
+
+                if (bookedCount === 3) cell.classList.add('status-full');
+                else if (bookedCount > 0) cell.classList.add('status-partial');
+
+                cell.addEventListener('click', () => openModal(dateISO, dayBookings));
+                dGrid.appendChild(cell);
+            }
+            card.appendChild(dGrid);
+            grid.appendChild(card);
+        }
+    }
+
+    // --- MODAL & CHIP LOGIC ---
+    function openModal(date, dayBookings) {
+        selectedDateISO = date;
+        selectedSlots = [];
+        document.getElementById('modalDateTitle').textContent = new Date(date).toDateString();
+        modal.style.display = 'flex';
+        document.getElementById('inNote').value = '';
+        document.getElementById('statusMsg').textContent = '';
+
+        // Reset Chips
+        document.querySelectorAll('.slot-chip').forEach(chip => {
+            chip.classList.remove('active', 'disabled');
+            chip.onclick = () => toggleSlot(chip); // Re-enable click
         });
 
-        // Empty slots
-        for(let i=0; i<firstDay; i++) {
-            const div = document.createElement('div');
-            div.className = 'date-cell empty';
-            grid.appendChild(div);
-        }
-
-        // Days
-        for(let i=1; i<=daysInMonth; i++) {
-            const div = document.createElement('div');
-            div.className = 'date-cell';
-            div.textContent = i;
-            
-            // Generate ISO Date
-            const dateISO = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            
-            // Check Bookings
-            const dayBookings = bookings.filter(b => b.date === dateISO);
-            
-            // Color Logic
-            if(dayBookings.length > 0) {
-                // Calculate total hours booked to determine if "Full"
-                let totalHours = 0;
-                dayBookings.forEach(b => {
-                    // Simple heuristic for demo
-                    totalHours += 4; 
-                });
+        // Show Booked Slots & Disable Chips
+        const historyDiv = document.getElementById('bookingHistory');
+        if (dayBookings.length > 0) {
+            let bookedText = [];
+            dayBookings.forEach(b => {
+                bookedText.push(`• ${b.slots} : ${b.note}`);
                 
-                if (dayBookings.length >= 3) {
-                     div.classList.add('status-full');
-                } else {
-                    div.classList.add('status-partial');
-                }
-                
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                div.appendChild(dot);
-            } else {
-                div.classList.add('status-avail');
-            }
-
-            if(dateISO === selectedDateISO) div.classList.add('selected');
-
-            div.addEventListener('click', () => selectDate(dateISO, div));
-            grid.appendChild(div);
-        }
-    }
-
-    // --- INTERACTION ---
-    function selectDate(isoDate, element) {
-        selectedDateISO = isoDate;
-        document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
-        element.classList.add('selected');
-        
-        document.getElementById('selectedDateDisplay').textContent = isoDate;
-        emptyState.style.display = 'none';
-        bookingForm.style.display = 'block';
-        
-        // Populate existing bookings list
-        const dayBookings = bookings.filter(b => b.date === isoDate);
-        bookingList.innerHTML = '';
-        if(dayBookings.length === 0) {
-            bookingList.innerHTML = '<div style="color:var(--text-sub); font-style:italic;">No bookings yet.</div>';
-        } else {
-            dayBookings.sort((a,b) => a.start.localeCompare(b.start)).forEach(b => {
-                const item = document.createElement('div');
-                item.className = 'booking-item';
-                item.innerHTML = `<span class="booking-time">${b.start} - ${b.end}</span> ${b.note}`;
-                bookingList.appendChild(item);
+                // Disable chips for already booked slots
+                if(b.slots.includes("Morning")) disableChip("Morning");
+                if(b.slots.includes("Noon")) disableChip("Noon");
+                if(b.slots.includes("Evening")) disableChip("Evening");
             });
+            historyDiv.style.display = 'block';
+            historyDiv.innerHTML = "<b>Booked:</b><br>" + bookedText.join('<br>');
+        } else {
+            historyDiv.style.display = 'none';
         }
     }
 
-    document.getElementById('prevMonth').addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-    });
-    document.getElementById('nextMonth').addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-    });
+    function disableChip(val) {
+        const el = document.querySelector(`.slot-chip[data-value="${val}"]`);
+        if(el) {
+            el.classList.add('disabled');
+            el.onclick = null; // Prevent clicking
+        }
+    }
+
+    function toggleSlot(el) {
+        if(el.classList.contains('disabled')) return;
+        
+        el.classList.toggle('active');
+        const val = el.getAttribute('data-value');
+        
+        if(selectedSlots.includes(val)) {
+            selectedSlots = selectedSlots.filter(s => s !== val);
+        } else {
+            selectedSlots.push(val);
+        }
+    }
+
+    function closeModal() { modal.style.display = 'none'; }
 
     // --- API HANDLING ---
+    document.getElementById('btnSave').addEventListener('click', async () => {
+        const note = document.getElementById('inNote').value;
+        const msg = document.getElementById('statusMsg');
+
+        if(selectedSlots.length === 0) return alert("Select at least one time slot.");
+        if(!note) return alert("Please add a note.");
+
+        msg.textContent = "Processing...";
+        
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    date: selectedDateISO,
+                    slots: selectedSlots,
+                    note: note
+                })
+            });
+            const data = await res.json();
+            
+            if(data.status === 'success') {
+                msg.textContent = "Saved!";
+                msg.style.color = "green";
+                await fetchBookings();
+                renderYear();
+                closeModal();
+            } else {
+                msg.textContent = data.message;
+                msg.style.color = "red";
+            }
+        } catch(e) {
+            msg.textContent = "Connection Error";
+        }
+    });
+
     async function fetchBookings() {
         try {
             const res = await fetch(API_URL);
             bookings = await res.json();
-        } catch (e) {
-            console.error("Failed to fetch", e);
-            alert("Could not load bookings. Check connection.");
-        }
+        } catch(e) { console.error(e); }
     }
-
-    saveBtn.addEventListener('click', async () => {
-        const start = document.getElementById('startTime').value;
-        const end = document.getElementById('endTime').value;
-        const note = document.getElementById('note').value;
-
-        if(!start || !end || !note) return alert("Please fill all fields");
-        if(start >= end) return alert("Start time must be before End time");
-
-        // UI Feedback
-        saveBtn.disabled = true;
-        loader.style.display = 'block';
-
-        const payload = {
-            date: selectedDateISO,
-            start: start,
-            end: end,
-            note: note
-        };
-
-        try {
-            // Using text/plain to avoid CORS Preflight issues in GAS
-            const res = await fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-            const result = await res.json();
-
-            if(result.status === 'success') {
-                alert("Booking Saved!");
-                document.getElementById('note').value = ''; // Clear note
-                await fetchBookings(); // Refresh data
-                renderCalendar(); // Re-color calendar
-                // Re-select date to refresh list
-                const selectedEl = document.querySelector('.selected');
-                if(selectedEl) selectDate(selectedDateISO, selectedEl);
-            } else {
-                alert("Error: " + result.message);
-            }
-        } catch (e) {
-            alert("Submission failed.");
-        } finally {
-            saveBtn.disabled = false;
-            loader.style.display = 'none';
-        }
-    });
+    
+    document.getElementById('prevYear').onclick = () => { displayYear--; renderYear(); };
+    document.getElementById('nextYear').onclick = () => { displayYear++; renderYear(); };
 
     init();
 </script>
