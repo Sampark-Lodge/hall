@@ -3,104 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shyam Residency | Royal Calendar</title>
+    <title>Shyam Residency | Manager</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Quicksand:wght@400;600&display=swap');
 
-        /* --- THEME VARIABLES --- */
         :root {
             --glass-bg: rgba(255, 255, 255, 0.15);
             --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            
             --text-white: #ffffff;
             --text-gold: #ffd700;
-            
-            --status-free: rgba(255, 255, 255, 0.1);
             --status-partial: #ff9f43;
             --status-full: #ff6b6b;
+            --primary: #2E3192;
         }
 
         body {
-            margin: 0;
-            font-family: 'Quicksand', sans-serif;
+            margin: 0; font-family: 'Quicksand', sans-serif;
             background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: var(--text-white);
-            min-height: 100vh;
-            padding: 20px;
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            color: var(--text-white); min-height: 100vh; padding: 20px;
         }
+        @keyframes gradientBG { 0% {background-position:0% 50%} 50% {background-position:100% 50%} 100% {background-position:0% 50%} }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* --- LAYOUT --- */
+        /* HEADER & GRID */
         .header { text-align: center; margin-bottom: 30px; }
         h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin: 0; }
-        
-        .year-controls { display: flex; justify-content: center; gap: 20px; margin-top: 10px; }
-        .btn-nav { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(4px); }
-        .current-year { font-size: 1.8rem; font-weight: bold; color: var(--text-gold); }
-
-        /* --- CALENDAR GRID --- */
-        .year-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .btn-nav { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; }
+        .year-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1400px; margin: 20px auto; }
         .month-card { background: var(--glass-bg); backdrop-filter: blur(8px); border-radius: 16px; border: 1px solid var(--glass-border); padding: 15px; }
-        .month-name { text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--text-gold); font-family: 'Playfair Display', serif; margin-bottom: 10px;}
+        .month-name { text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--text-gold); font-family: 'Playfair Display', serif; margin-bottom: 10px; }
         
         .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 0.8rem; }
         .day-label { text-align: center; opacity: 0.7; font-size: 0.7rem; }
-        
-        .date-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; background: var(--status-free); transition: 0.2s; position: relative;}
+        .date-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; background: rgba(255,255,255,0.1); transition: 0.2s; }
         .date-cell:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
-        .is-today { border: 2px solid var(--text-gold); }
-
-        /* Colors based on slot count */
         .status-partial { background: var(--status-partial); color: white; box-shadow: 0 0 5px var(--status-partial); }
         .status-full { background: var(--status-full); color: white; box-shadow: 0 0 8px var(--status-full); }
 
-        /* --- MODAL --- */
+        /* MODAL */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); z-index: 1000; }
-        .modal-content { background: white; color: #333; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; animation: popIn 0.3s ease; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-content { background: white; color: #333; padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
         .modal-header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #2E3192; }
+        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--primary); }
         .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
 
-        /* --- SLOT SELECTOR (CHIPS) --- */
-        .slot-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        .slot-chip {
-            flex: 1; padding: 10px; text-align: center; border: 2px solid #ddd; 
-            border-radius: 8px; cursor: pointer; transition: 0.2s; user-select: none;
-            font-weight: 600; color: #555;
+        /* EXISTING BOOKINGS SECTION */
+        .booking-item { 
+            background: #f4f7f6; border-left: 4px solid var(--primary); 
+            padding: 10px; margin-bottom: 10px; border-radius: 4px; 
+            display: flex; flex-direction: column; gap: 5px;
         }
-        
-        /* Checkbox hidden logic */
-        .slot-chip.active { border-color: transparent; color: white; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        
-        /* Individual Colors */
-        .slot-chip[data-value="Morning"].active { background: #f39c12; } /* Orange */
-        .slot-chip[data-value="Noon"].active { background: #e67e22; } /* Darker Orange */
-        .slot-chip[data-value="Evening"].active { background: #2E3192; } /* Purple/Blue */
+        .booking-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); }
+        .booking-actions { display: flex; gap: 5px; margin-top: 5px; }
+        .btn-action { font-size: 0.8rem; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: white; }
+        .btn-edit { background: #f39c12; }
+        .btn-del { background: #c0392b; }
 
-        .slot-chip.disabled { background: #eee; color: #aaa; cursor: not-allowed; border-color: #eee; opacity: 0.6; }
+        /* NEW BOOKING FORM */
+        .new-booking-section { border-top: 2px solid #eee; margin-top: 20px; padding-top: 15px; }
+        .slot-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .slot-chip { flex: 1; padding: 10px; text-align: center; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: 600; color: #555; }
+        .slot-chip.active { color: white; border-color: transparent; }
+        .slot-chip[data-value="Morning"].active { background: #f39c12; }
+        .slot-chip[data-value="Noon"].active { background: #e67e22; }
+        .slot-chip[data-value="Evening"].active { background: var(--primary); }
+        .slot-chip.disabled { background: #eee; color: #ccc; cursor: not-allowed; opacity: 0.5; }
 
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .save-btn { width: 100%; padding: 12px; background: #2E3192; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .booking-history { background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; border-left: 3px solid #2E3192;}
+        .save-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .loader { text-align: center; font-size: 0.8rem; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1>Shyam Residency</h1>
-    <div class="year-controls">
+    <div style="margin-top:10px;">
         <button class="btn-nav" id="prevYear">←</button>
-        <span class="current-year" id="yearDisplay"></span>
+        <span id="yearDisplay" style="font-size:1.5rem; font-weight:bold; margin:0 15px; color:var(--text-gold);"></span>
         <button class="btn-nav" id="nextYear">→</button>
     </div>
 </div>
@@ -114,35 +95,36 @@
             <button class="close-btn" onclick="closeModal()">×</button>
         </div>
         
-        <div id="bookingHistory" class="booking-history" style="display:none;"></div>
-
-        <label style="font-weight:bold; display:block; margin-bottom:8px;">Select Slots:</label>
-        <div class="slot-container">
-            <div class="slot-chip" data-value="Morning" onclick="toggleSlot(this)">Morning</div>
-            <div class="slot-chip" data-value="Noon" onclick="toggleSlot(this)">Noon</div>
-            <div class="slot-chip" data-value="Evening" onclick="toggleSlot(this)">Evening</div>
+        <div id="existingContainer">
+            <label style="font-weight:bold; display:block; margin-bottom:5px;">Existing Bookings:</label>
+            <div id="bookingList"></div>
         </div>
 
-        <label>Client Name / Note</label> 
-        <textarea id="inNote" rows="2" placeholder="Enter booking details..."></textarea>
+        <div class="new-booking-section">
+            <label style="font-weight:bold; display:block; margin-bottom:8px;">Add New Booking:</label>
+            <div class="slot-container">
+                <div class="slot-chip" data-value="Morning" onclick="toggleSlot(this)">Morning</div>
+                <div class="slot-chip" data-value="Noon" onclick="toggleSlot(this)">Noon</div>
+                <div class="slot-chip" data-value="Evening" onclick="toggleSlot(this)">Evening</div>
+            </div>
+
+            <textarea id="inNote" rows="2" placeholder="Client Name / Note..."></textarea>
+            <button class="save-btn" onclick="saveBooking()">Confirm New Booking</button>
+        </div>
         
-        <button class="save-btn" id="btnSave">Confirm Booking</button>
-        <p id="statusMsg" style="text-align: center; font-size: 0.8rem; margin-top:5px; color:#666;"></p>
+        <p class="loader" id="statusMsg"></p>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbwC5pqyTfjGh3J5AiCbmww9ez2ilbw2EkxdIntj5P_rSXKYL3UmZ38SBQxNHx-ShhgaXw/exec"; // <--- PASTE NEW WEB APP URL HERE
+    const API_URL = "https://script.google.com/macros/s/AKfycbwC5pqyTfjGh3J5AiCbmww9ez2ilbw2EkxdIntj5P_rSXKYL3UmZ38SBQxNHx-ShhgaXw/exec"; // <--- PASTE WEB APP URL
 
     let displayYear = new Date().getFullYear();
     let bookings = [];
     let selectedDateISO = null;
-    let selectedSlots = []; // Stores currently selected chips
+    let selectedSlots = [];
 
-    const grid = document.getElementById('yearGrid');
-    const modal = document.getElementById('bookingModal');
-
+    // INIT
     async function init() {
         document.getElementById('yearDisplay').textContent = displayYear;
         renderYear();
@@ -150,155 +132,145 @@
         renderYear();
     }
 
-    // --- RENDER YEAR GRID ---
+    // RENDER YEAR
     function renderYear() {
+        const grid = document.getElementById('yearGrid');
         grid.innerHTML = '';
         document.getElementById('yearDisplay').textContent = displayYear;
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        
-        for (let m = 0; m < 12; m++) {
-            const card = document.createElement('div');
-            card.className = 'month-card';
-            
-            const title = document.createElement('div');
-            title.className = 'month-name';
-            title.textContent = monthNames[m];
+
+        for(let m=0; m<12; m++) {
+            const card = document.createElement('div'); card.className = 'month-card';
+            const title = document.createElement('div'); title.className = 'month-name'; title.textContent = monthNames[m];
             card.appendChild(title);
 
-            const dGrid = document.createElement('div');
-            dGrid.className = 'days-grid';
-            
-            // Labels
-            ["S","M","T","W","T","F","S"].forEach(d => {
-                const l = document.createElement('div'); l.className = 'day-label'; l.textContent=d; dGrid.appendChild(l);
+            const dGrid = document.createElement('div'); dGrid.className = 'days-grid';
+            ["S","M","T","W","T","F","S"].forEach(d=>{
+                const l=document.createElement('div'); l.className='day-label'; l.textContent=d; dGrid.appendChild(l);
             });
 
-            // Days
-            const daysInMonth = new Date(displayYear, m + 1, 0).getDate();
+            const daysInMonth = new Date(displayYear, m+1, 0).getDate();
             const firstDay = new Date(displayYear, m, 1).getDay();
+            for(let i=0; i<firstDay; i++) dGrid.appendChild(document.createElement('div'));
 
-            for(let i=0; i<firstDay; i++) dGrid.appendChild(document.createElement('div')); // Spacers
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateISO = `${displayYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const cell = document.createElement('div');
-                cell.className = 'date-cell';
-                cell.textContent = d;
-
-                // Color Logic
-                const dayBookings = bookings.filter(b => b.date === dateISO);
-                let bookedCount = 0;
+            for(let d=1; d<=daysInMonth; d++){
+                const iso = `${displayYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const cell = document.createElement('div'); cell.className = 'date-cell'; cell.textContent = d;
                 
-                // Count total occupied slots for this day
-                dayBookings.forEach(b => {
-                    if(b.slots.includes('Morning')) bookedCount++;
-                    if(b.slots.includes('Noon')) bookedCount++;
-                    if(b.slots.includes('Evening')) bookedCount++;
+                // Color Logic
+                const dayBookings = bookings.filter(b => b.date === iso);
+                let count = 0;
+                dayBookings.forEach(b => { 
+                    if(b.slots.includes('Morning')) count++;
+                    if(b.slots.includes('Noon')) count++;
+                    if(b.slots.includes('Evening')) count++;
                 });
 
-                if (bookedCount === 3) cell.classList.add('status-full');
-                else if (bookedCount > 0) cell.classList.add('status-partial');
+                if(count === 3) cell.classList.add('status-full');
+                else if(count > 0) cell.classList.add('status-partial');
 
-                cell.addEventListener('click', () => openModal(dateISO, dayBookings));
+                cell.onclick = () => openModal(iso, dayBookings);
                 dGrid.appendChild(cell);
             }
-            card.appendChild(dGrid);
-            grid.appendChild(card);
+            card.appendChild(dGrid); grid.appendChild(card);
         }
     }
 
-    // --- MODAL & CHIP LOGIC ---
+    // MODAL LOGIC
     function openModal(date, dayBookings) {
         selectedDateISO = date;
         selectedSlots = [];
         document.getElementById('modalDateTitle').textContent = new Date(date).toDateString();
-        modal.style.display = 'flex';
-        document.getElementById('inNote').value = '';
+        document.getElementById('bookingModal').style.display = 'flex';
         document.getElementById('statusMsg').textContent = '';
+        document.getElementById('inNote').value = '';
 
         // Reset Chips
-        document.querySelectorAll('.slot-chip').forEach(chip => {
-            chip.classList.remove('active', 'disabled');
-            chip.onclick = () => toggleSlot(chip); // Re-enable click
+        document.querySelectorAll('.slot-chip').forEach(c => {
+            c.classList.remove('active', 'disabled');
+            c.onclick = () => toggleSlot(c);
         });
 
-        // Show Booked Slots & Disable Chips
-        const historyDiv = document.getElementById('bookingHistory');
-        if (dayBookings.length > 0) {
-            let bookedText = [];
-            dayBookings.forEach(b => {
-                bookedText.push(`• ${b.slots} : ${b.note}`);
-                
-                // Disable chips for already booked slots
-                if(b.slots.includes("Morning")) disableChip("Morning");
-                if(b.slots.includes("Noon")) disableChip("Noon");
-                if(b.slots.includes("Evening")) disableChip("Evening");
-            });
-            historyDiv.style.display = 'block';
-            historyDiv.innerHTML = "<b>Booked:</b><br>" + bookedText.join('<br>');
-        } else {
-            historyDiv.style.display = 'none';
-        }
-    }
+        const listDiv = document.getElementById('bookingList');
+        listDiv.innerHTML = '';
 
-    function disableChip(val) {
-        const el = document.querySelector(`.slot-chip[data-value="${val}"]`);
-        if(el) {
-            el.classList.add('disabled');
-            el.onclick = null; // Prevent clicking
+        if(dayBookings.length === 0) {
+            listDiv.innerHTML = '<i style="color:#777; font-size:0.9rem;">No bookings yet.</i>';
+        } else {
+            // Render existing bookings with buttons
+            dayBookings.forEach(row => {
+                const slots = row.slots.split(',').map(s=>s.trim());
+                slots.forEach(slot => {
+                    const item = document.createElement('div');
+                    item.className = 'booking-item';
+                    item.innerHTML = `
+                        <div class="booking-header"><span>${slot}</span></div>
+                        <div style="font-size:0.9rem;">${row.note}</div>
+                        <div class="booking-actions">
+                            <button class="btn-action btn-edit" onclick="updateBooking(${row.row_index}, '${row.note}')">Update Details</button>
+                            <button class="btn-action btn-del" onclick="deleteBooking(${row.row_index}, '${slot}')">Remove Booking</button>
+                        </div>
+                    `;
+                    listDiv.appendChild(item);
+
+                    // Disable chip for new booking
+                    const chip = document.querySelector(`.slot-chip[data-value="${slot}"]`);
+                    if(chip) { chip.classList.add('disabled'); chip.onclick=null; }
+                });
+            });
         }
     }
 
     function toggleSlot(el) {
         if(el.classList.contains('disabled')) return;
-        
         el.classList.toggle('active');
         const val = el.getAttribute('data-value');
-        
-        if(selectedSlots.includes(val)) {
-            selectedSlots = selectedSlots.filter(s => s !== val);
-        } else {
-            selectedSlots.push(val);
-        }
+        if(selectedSlots.includes(val)) selectedSlots = selectedSlots.filter(s=>s!==val);
+        else selectedSlots.push(val);
     }
 
-    function closeModal() { modal.style.display = 'none'; }
-
-    // --- API HANDLING ---
-    document.getElementById('btnSave').addEventListener('click', async () => {
+    // ACTIONS
+    async function saveBooking() {
         const note = document.getElementById('inNote').value;
+        if(selectedSlots.length === 0) return alert("Select a slot first.");
+        if(!note) return alert("Enter a note.");
+        
+        await sendData({ action: 'create', date: selectedDateISO, slots: selectedSlots, note: note });
+    }
+
+    async function deleteBooking(rowIndex, slot) {
+        if(!confirm(`Are you sure you want to remove the ${slot} booking?`)) return;
+        await sendData({ action: 'delete', row_index: rowIndex, slot: slot });
+    }
+
+    async function updateBooking(rowIndex, oldNote) {
+        const newNote = prompt("Update Note / Client Name:", oldNote);
+        if(newNote === null || newNote === oldNote) return;
+        await sendData({ action: 'update', row_index: rowIndex, note: newNote });
+    }
+
+    async function sendData(payload) {
         const msg = document.getElementById('statusMsg');
-
-        if(selectedSlots.length === 0) return alert("Select at least one time slot.");
-        if(!note) return alert("Please add a note.");
-
         msg.textContent = "Processing...";
+        msg.style.color = "blue";
         
         try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    date: selectedDateISO,
-                    slots: selectedSlots,
-                    note: note
-                })
-            });
+            const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
             const data = await res.json();
-            
             if(data.status === 'success') {
-                msg.textContent = "Saved!";
+                msg.textContent = "Success!";
                 msg.style.color = "green";
                 await fetchBookings();
                 renderYear();
-                closeModal();
+                // Re-open modal to refresh list
+                const dayBookings = bookings.filter(b => b.date === selectedDateISO);
+                openModal(selectedDateISO, dayBookings);
             } else {
-                msg.textContent = data.message;
-                msg.style.color = "red";
+                alert("Error: " + data.message);
+                msg.textContent = "";
             }
-        } catch(e) {
-            msg.textContent = "Connection Error";
-        }
-    });
+        } catch(e) { alert("Connection failed"); msg.textContent = ""; }
+    }
 
     async function fetchBookings() {
         try {
@@ -306,12 +278,12 @@
             bookings = await res.json();
         } catch(e) { console.error(e); }
     }
-    
+
+    function closeModal() { document.getElementById('bookingModal').style.display = 'none'; }
     document.getElementById('prevYear').onclick = () => { displayYear--; renderYear(); };
     document.getElementById('nextYear').onclick = () => { displayYear++; renderYear(); };
 
     init();
 </script>
-
 </body>
 </html>
